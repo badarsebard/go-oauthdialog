@@ -137,7 +137,7 @@ func New(conf *oauth2.Config) *Dialog {
 }
 
 // Create a new OAuth2 dialog and open it.
-func Open(conf *oauth2.Config) (code string, err error) {
+func Open(conf *oauth2.Config, opts ...oauth2.AuthCodeOption) (code string, err error) {
 	d := New(conf)
-	return d.Open()
+	return d.Open(opts...)
 }
