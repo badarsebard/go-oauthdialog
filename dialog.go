@@ -12,29 +12,29 @@ import (
 
 // OAuth2 errors defined in RFC 6749 section 4.1.2.1.
 var (
-	ErrInvalidRequest = errors.New("Invalid request")
-	ErrUnauthorizedClient = errors.New("Client not authorized")
-	ErrAccessDenied = errors.New("Access denied")
+	ErrInvalidRequest          = errors.New("Invalid request")
+	ErrUnauthorizedClient      = errors.New("Client not authorized")
+	ErrAccessDenied            = errors.New("Access denied")
 	ErrUnsupportedResponseType = errors.New("Unsupported response type")
-	ErrInvalidScope = errors.New("Invalid scope")
-	ErrServerError = errors.New("Server error")
-	ErrTemporarilyUnavailable = errors.New("Temporarily unavailable")
+	ErrInvalidScope            = errors.New("Invalid scope")
+	ErrServerError             = errors.New("Server error")
+	ErrTemporarilyUnavailable  = errors.New("Temporarily unavailable")
 )
 
 var errorsByName = map[string]error{
-	"invalid_request": ErrInvalidRequest,
-	"unauthorized_client": ErrUnauthorizedClient,
-	"access_denied": ErrAccessDenied,
+	"invalid_request":           ErrInvalidRequest,
+	"unauthorized_client":       ErrUnauthorizedClient,
+	"access_denied":             ErrAccessDenied,
 	"unsupported_response_type": ErrUnsupportedResponseType,
-	"invalid_scope": ErrInvalidScope,
-	"server_error": ErrServerError,
-	"temporarily_unavailable": ErrTemporarilyUnavailable,
+	"invalid_scope":             ErrInvalidScope,
+	"server_error":              ErrServerError,
+	"temporarily_unavailable":   ErrTemporarilyUnavailable,
 }
 
 type handlerResponse struct {
 	State string
 
-	Code string
+	Code  string
 	Error string
 }
 
@@ -51,11 +51,11 @@ type Dialog struct {
 	SuccessHandler http.HandlerFunc
 
 	config *oauth2.Config
-	done chan *handlerResponse
+	done   chan *handlerResponse
 }
 
 // Open the dialog.
-func (d *Dialog) Open() (code string, err error) {
+func (d *Dialog) Open(opts ...oauth2.AuthCodeOption) (code string, err error) {
 	// Start local HTTP server
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -77,7 +77,7 @@ func (d *Dialog) Open() (code string, err error) {
 		return
 	}
 
-	url := conf.AuthCodeURL(state)
+	url := conf.AuthCodeURL(state, opts...)
 	if err = open.Run(url); err != nil {
 		return
 	}
@@ -111,7 +111,7 @@ func (d *Dialog) serveHTTP(w http.ResponseWriter, req *http.Request) {
 
 	res := &handlerResponse{
 		State: q.Get("state"),
-		Code: q.Get("code"),
+		Code:  q.Get("code"),
 		Error: q.Get("error"),
 	}
 
@@ -130,9 +130,9 @@ func (d *Dialog) serveHTTP(w http.ResponseWriter, req *http.Request) {
 // Create a new OAuth2 dialog.
 func New(conf *oauth2.Config) *Dialog {
 	return &Dialog{
-		Cancel: make(chan bool),
+		Cancel:         make(chan bool),
 		SuccessHandler: defaultSuccessHandler,
-		config: conf,
+		config:         conf,
 	}
 }
 
