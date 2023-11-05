@@ -3,12 +3,10 @@ package oauthdialog
 
 import (
 	"errors"
-	"net"
-	"net/http"
-	"strings"
-
 	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/oauth2"
+	"net"
+	"net/http"
 )
 
 // OAuth2 errors defined in RFC 6749 section 4.1.2.1.
@@ -108,37 +106,22 @@ func (d *Dialog) Open(opts ...oauth2.AuthCodeOption) (code string, err error) {
 }
 
 func (d *Dialog) serveHTTP(w http.ResponseWriter, req *http.Request) {
-	q := req.URL.Query()
-	var f map[string]string
-	rf := strings.Split(req.URL.Fragment, "&")
-	for _, v := range rf {
-		kv := strings.Split(v, "=")
-		if len(kv) == 2 {
-			f[kv[0]] = kv[1]
-		}
+	err := req.ParseForm()
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
-
-	state := q.Get("state")
-	if state == "" {
-		state = f["state"]
-	}
-	code := q.Get("code")
-	if code == "" {
-		code = f["code"]
-	}
-	err := q.Get("error")
-	if err == "" {
-		err = f["error"]
-	}
+	state := req.Form.Get("state")
+	code := req.Form.Get("code")
+	formError := req.Form.Get("error")
 
 	res := &handlerResponse{
 		State: state,
 		Code:  code,
-		Error: err,
+		Error: formError,
 	}
 
 	if res.State == "" || (res.Code == "" && res.Error == "") {
-		w.Header().Set("X-Fragment", req.URL.Fragment)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
