@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/oauth2"
@@ -108,11 +109,30 @@ func (d *Dialog) Open(opts ...oauth2.AuthCodeOption) (code string, err error) {
 
 func (d *Dialog) serveHTTP(w http.ResponseWriter, req *http.Request) {
 	q := req.URL.Query()
+	var f map[string]string
+	rf := strings.Split(req.URL.Fragment, "&")
+	for _, v := range rf {
+		kv := strings.Split(v, "=")
+		f[kv[0]] = kv[1]
+	}
+
+	state := q.Get("state")
+	if state == "" {
+		state = f["state"]
+	}
+	code := q.Get("code")
+	if code == "" {
+		code = f["code"]
+	}
+	err := q.Get("error")
+	if err == "" {
+		err = f["error"]
+	}
 
 	res := &handlerResponse{
-		State: q.Get("state"),
-		Code:  q.Get("code"),
-		Error: q.Get("error"),
+		State: state,
+		Code:  code,
+		Error: err,
 	}
 
 	if res.State == "" || (res.Code == "" && res.Error == "") {
