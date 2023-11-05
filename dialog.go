@@ -31,10 +31,10 @@ var errorsByName = map[string]error{
 }
 
 type handlerResponse struct {
-	State string
-
-	Code  string
-	Error string
+	State   string
+	Code    string
+	Error   string
+	IdToken string
 }
 
 func defaultSuccessHandler(w http.ResponseWriter, req *http.Request) {
@@ -54,7 +54,7 @@ type Dialog struct {
 }
 
 // Open the dialog.
-func (d *Dialog) Open(opts ...oauth2.AuthCodeOption) (code string, err error) {
+func (d *Dialog) Open(opts ...oauth2.AuthCodeOption) (code, idToken string, err error) {
 	// Start local HTTP server
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -99,6 +99,7 @@ func (d *Dialog) Open(opts ...oauth2.AuthCodeOption) (code string, err error) {
 		}
 
 		code = res.Code
+		idToken = res.IdToken
 		return
 	case <-d.Cancel:
 		return
@@ -114,11 +115,13 @@ func (d *Dialog) serveHTTP(w http.ResponseWriter, req *http.Request) {
 	state := req.Form.Get("state")
 	code := req.Form.Get("code")
 	formError := req.Form.Get("error")
+	idToken := req.Form.Get("id_token")
 
 	res := &handlerResponse{
-		State: state,
-		Code:  code,
-		Error: formError,
+		State:   state,
+		Code:    code,
+		Error:   formError,
+		IdToken: idToken,
 	}
 
 	if res.State == "" || (res.Code == "" && res.Error == "") {
@@ -143,7 +146,7 @@ func New(conf *oauth2.Config) *Dialog {
 }
 
 // Create a new OAuth2 dialog and open it.
-func Open(conf *oauth2.Config, opts ...oauth2.AuthCodeOption) (code string, err error) {
+func Open(conf *oauth2.Config, opts ...oauth2.AuthCodeOption) (code, idToken string, err error) {
 	d := New(conf)
 	return d.Open(opts...)
 }
