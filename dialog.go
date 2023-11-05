@@ -138,6 +138,7 @@ func (d *Dialog) serveHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if res.State == "" || (res.Code == "" && res.Error == "") {
+		w.Header().Set("X-Fragment", req.URL.Fragment)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
