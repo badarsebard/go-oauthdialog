@@ -113,7 +113,9 @@ func (d *Dialog) serveHTTP(w http.ResponseWriter, req *http.Request) {
 	rf := strings.Split(req.URL.Fragment, "&")
 	for _, v := range rf {
 		kv := strings.Split(v, "=")
-		f[kv[0]] = kv[1]
+		if len(kv) == 2 {
+			f[kv[0]] = kv[1]
+		}
 	}
 
 	state := q.Get("state")
